@@ -59,6 +59,108 @@ def load_config(cfg_path: Path) -> List[Dict[str, Any]]:
     return cfgs
 
 
+def load_appendix_codes() -> List[str]:
+    """从 appendix.json 加载股票代码列表"""
+    appendix_path = Path("appendix.json")
+    if not appendix_path.exists():
+        logger.warning("appendix.json 文件不存在，返回空列表")
+        return []
+    
+    try:
+        with appendix_path.open(encoding="utf-8") as f:
+            data = json.load(f)
+        codes = data.get("data", [])
+        logger.info("从 appendix.json 加载了 %d 只股票", len(codes))
+        return codes
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error("读取 appendix.json 失败: %s", e)
+        return []
+
+
+def load_hs300_codes() -> List[str]:
+    """获取沪深300成分股列表"""
+    try:
+        import akshare as ak
+        logger.info("正在获取沪深300成分股列表...")
+        
+        # 尝试不同的API方法
+        try:
+            df = ak.index_stock_cons_csindex(symbol='000300')
+            codes = df['成分券代码'].tolist()
+        except:
+            # 备选方法
+            df = ak.stock_zh_index_spot_em(symbol='sh000300')
+            if not df.empty:
+                # 这个API返回的是指数信息，我们需要用其他方法
+                # 作为备选，返回一些知名的沪深300股票
+                codes = ['000001', '000002', '000858', '600000', '600036', '600519', 
+                        '000568', '002415', '300014', '600276', '000725', '002714',
+                        '600887', '002236', '600031', '000063', '600104', '000166']
+                logger.info("使用备选沪深300股票列表")
+            else:
+                codes = []
+        
+        if not codes:
+            logger.warning("获取沪深300成分股失败，返回空列表")
+            return []
+        
+        logger.info("获取沪深300成分股 %d 只", len(codes))
+        return codes
+    except Exception as e:
+        logger.error("获取沪深300成分股失败: %s", e)
+        # 返回一些知名的沪深300股票作为备选
+        backup_codes = ['000001', '000002', '000858', '600000', '600036', '600519', 
+                       '000568', '002415', '300014', '600276', '000725', '002714']
+        logger.info("使用备选沪深300股票列表 %d 只", len(backup_codes))
+        return backup_codes
+
+
+def load_a500_codes() -> List[str]:
+    """获取 A500 (中证500) 成分股列表"""
+    try:
+        import akshare as ak
+        logger.info("正在获取 A500 (中证500) 成分股列表...")
+        
+        # 尝试不同的API方法
+        try:
+            df = ak.index_stock_cons_csindex(symbol='000905')
+            codes = df['成分券代码'].tolist()
+        except:
+            # 作为备选，返回一些中证500的代表性股票
+            codes = ['002027', '002129', '002142', '002252', '002311', '002375',
+                    '002405', '002493', '002508', '002624', '002677', '002709',
+                    '300033', '300059', '300070', '300122', '300144', '300207']
+            logger.info("使用备选A500股票列表")
+        
+        if not codes:
+            logger.warning("获取 A500 成分股失败，返回空列表")
+            return []
+        
+        logger.info("获取 A500 成分股 %d 只", len(codes))
+        return codes
+    except Exception as e:
+        logger.error("获取 A500 成分股失败: %s", e)
+        # 返回一些中证500的代表性股票作为备选
+        backup_codes = ['002027', '002129', '002142', '002252', '002311', '002375',
+                       '002405', '002493', '002508', '002624', '002677', '002709']
+        logger.info("使用备选A500股票列表 %d 只", len(backup_codes))
+        return backup_codes
+
+
+def load_combined_codes() -> List[str]:
+    """加载沪深300、A500和appendix.json中的股票，去重后返回"""
+    hs300_codes = load_hs300_codes()
+    a500_codes = load_a500_codes()
+    appendix_codes = load_appendix_codes()
+    
+    # 合并并去重
+    combined_codes = list(set(hs300_codes + a500_codes + appendix_codes))
+    logger.info("沪深300 + A500 + appendix.json 总计 %d 只股票 (沪深300: %d, A500: %d, appendix: %d)", 
+                len(combined_codes), len(hs300_codes), len(a500_codes), len(appendix_codes))
+    
+    return combined_codes
+
+
 def instantiate_selector(cfg: Dict[str, Any]):
     """动态加载 Selector 类并实例化"""
     cls_name: str = cfg.get("class")
@@ -83,6 +185,8 @@ def main():
     p.add_argument("--config", default="./configs.json", help="Selector 配置文件")
     p.add_argument("--date", help="交易日 YYYY-MM-DD；缺省=数据最新日期")
     p.add_argument("--tickers", default="all", help="'all' 或逗号分隔股票代码列表")
+    p.add_argument("--only-appendix", action="store_true", help="只处理 appendix.json 中的股票")
+    p.add_argument("--combined-appendix", action="store_true", help="只处理沪深300、A500和appendix.json中的股票")
     args = p.parse_args()
 
     # --- 加载行情 ---
@@ -93,8 +197,12 @@ def main():
 
     codes = (
         [f.stem for f in data_dir.glob("*.csv")]
-        if args.tickers.lower() == "all"
+        if args.tickers.lower() == "all" and not args.only_appendix and not args.combined_appendix
         else [c.strip() for c in args.tickers.split(",") if c.strip()]
+        if not args.only_appendix and not args.combined_appendix
+        else load_appendix_codes()
+        if args.only_appendix
+        else load_combined_codes()
     )
     if not codes:
         logger.error("股票池为空！")

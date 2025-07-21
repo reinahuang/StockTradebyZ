@@ -48,7 +48,8 @@ def _get_mktcap_ak() -> pd.DataFrame:
             logger.warning("AKShare 获取市值快照失败(%d/3): %s", attempt, e)
             time.sleep(backoff := random.uniform(1, 3) * attempt)
     else:
-        raise RuntimeError("AKShare 连续三次拉取市值快照失败！")
+        logger.warning("AKShare 连续三次拉取市值快照失败，将使用空的市值数据")
+        return pd.DataFrame(columns=["code", "mktcap"])
 
     df = df[["代码", "总市值"]].rename(columns={"代码": "code", "总市值": "mktcap"})
     df["mktcap"] = pd.to_numeric(df["mktcap"], errors="coerce")
@@ -56,26 +57,130 @@ def _get_mktcap_ak() -> pd.DataFrame:
 
 # --------------------------- 股票池筛选 --------------------------- #
 
+def _get_hs300_codes() -> List[str]:
+    """获取沪深300成分股列表"""
+    try:
+        logger.info("正在获取沪深300成分股列表...")
+        # 尝试不同的API方法
+        try:
+            df = ak.index_stock_cons_sina(symbol='000300')
+            codes = df['code'].tolist()
+            logger.info("成功获取沪深300成分股 %d 只", len(codes))
+            return codes
+        except Exception as e1:
+            logger.warning("index_stock_cons_sina失败: %s", e1)
+            try:
+                df = ak.index_stock_cons_csindex(symbol='000300')
+                codes = df['成分券代码'].tolist()
+                logger.info("成功获取沪深300成分股 %d 只", len(codes))
+                return codes
+            except Exception as e2:
+                logger.warning("index_stock_cons_csindex失败: %s", e2)
+                # 作为备选，返回一些知名的沪深300股票
+                codes = ['000001', '000002', '000858', '600000', '600036', '600519', 
+                        '000568', '002415', '300014', '600276', '000725', '002714',
+                        '600887', '002236', '600031', '000063', '600104', '000166']
+                logger.info("使用备选沪深300股票列表 %d 只", len(codes))
+                return codes
+    except Exception as e:
+        logger.error("获取沪深300成分股失败: %s", e)
+        # 返回一些知名的沪深300股票作为备选
+        backup_codes = ['000001', '000002', '000858', '600000', '600036', '600519', 
+                       '000568', '002415', '300014', '600276', '000725', '002714']
+        logger.info("使用备选沪深300股票列表 %d 只", len(backup_codes))
+        return backup_codes
+
+
+def _get_a500_codes() -> List[str]:
+    """获取A500(中证500)成分股列表"""
+    try:
+        logger.info("正在获取A500(中证500)成分股列表...")
+        # 尝试不同的API方法
+        try:
+            df = ak.index_stock_cons_sina(symbol='000905')
+            codes = df['code'].tolist()
+            logger.info("成功获取A500成分股 %d 只", len(codes))
+            return codes
+        except Exception as e1:
+            logger.warning("index_stock_cons_sina失败: %s", e1)
+            try:
+                df = ak.index_stock_cons_csindex(symbol='000905')
+                codes = df['成分券代码'].tolist()
+                logger.info("成功获取A500成分股 %d 只", len(codes))
+                return codes
+            except Exception as e2:
+                logger.warning("index_stock_cons_csindex失败: %s", e2)
+                # 作为备选，返回一些中证500的代表性股票
+                codes = ['002027', '002129', '002142', '002252', '002311', '002375',
+                        '002405', '002493', '002508', '002624', '002677', '002709',
+                        '300033', '300059', '300070', '300122', '300144', '300207']
+                logger.info("使用备选A500股票列表 %d 只", len(codes))
+                return codes
+    except Exception as e:
+        logger.error("获取A500成分股失败: %s", e)
+        # 返回一些中证500的代表性股票作为备选
+        backup_codes = ['002027', '002129', '002142', '002252', '002311', '002375',
+                       '002405', '002493', '002508', '002624', '002677', '002709']
+        logger.info("使用备选A500股票列表 %d 只", len(backup_codes))
+        return backup_codes
+
 def get_constituents(
     min_cap: float,
     max_cap: float,
-    small_player: bool,
+    exclude_gem: bool,
+    include_kcb: bool,
+    only_appendix: bool,
+    combined_appendix: bool = False,
     mktcap_df: Optional[pd.DataFrame] = None,
 ) -> List[str]:
-    df = mktcap_df if mktcap_df is not None else _get_mktcap_ak()
-
-    cond = (df["mktcap"] >= min_cap) & (df["mktcap"] <= max_cap)
-    if small_player:
-        cond &= ~df["code"].str.startswith(("300", "301", "688", "8", "4"))
-
-    codes = df.loc[cond, "code"].str.zfill(6).tolist()
-
     # 附加股票池 appendix.json
     try:
         with open("appendix.json", "r", encoding="utf-8") as f:
             appendix_codes = json.load(f)["data"]
     except FileNotFoundError:
         appendix_codes = []
+    
+    # 如果只处理 appendix.json 中的股票
+    if only_appendix:
+        if not appendix_codes:
+            logger.warning("appendix.json 为空或不存在，没有股票可处理")
+            return []
+        logger.info("只处理 appendix.json 中的 %d 只股票", len(appendix_codes))
+        return appendix_codes
+    
+    # 如果使用沪深300 + A500 + appendix.json组合
+    if combined_appendix:
+        hs300_codes = _get_hs300_codes()
+        a500_codes = _get_a500_codes()
+        
+        # 合并并去重
+        combined_codes = list(set(hs300_codes + a500_codes + appendix_codes))
+        logger.info("沪深300 + A500 + appendix.json 总计 %d 只股票 (沪深300: %d, A500: %d, appendix: %d)", 
+                    len(combined_codes), len(hs300_codes), len(a500_codes), len(appendix_codes))
+        return combined_codes
+
+    df = mktcap_df if mktcap_df is not None else _get_mktcap_ak()
+
+    # 如果市值数据为空，返回一个基本的股票列表
+    if df.empty:
+        logger.warning("市值数据为空，将使用默认股票列表")
+        # 返回一些常见的大盘股作为默认
+        default_codes = ['000001', '000002', '600000', '600036', '600519', '000858']
+        logger.info("使用默认股票列表，共 %d 只股票", len(default_codes))
+        return default_codes
+
+    cond = (df["mktcap"] >= min_cap) & (df["mktcap"] <= max_cap)
+    
+    # 排除创业板、北交所等
+    if exclude_gem:
+        cond &= ~df["code"].str.startswith(("300", "301", "8", "4"))
+    
+    # 如果不专门包含科创板，则排除科创板
+    if not include_kcb:
+        cond &= ~df["code"].str.startswith("688")
+        return [code.zfill(6) for code in appendix_codes]
+    
+    codes = df.loc[cond, "code"].str.zfill(6).tolist()
     codes = list(dict.fromkeys(appendix_codes + codes))  # 去重保持顺序
 
     logger.info("筛选得到 %d 只股票", len(codes))
@@ -119,12 +224,14 @@ def _get_kline_tushare(code: str, start: str, end: str, adjust: str) -> pd.DataF
     adj_flag = None if adjust == "" else adjust
     for attempt in range(1, 4):
         try:
-            df = ts.pro_bar(
+            # 使用全局 pro API，如果不存在则重新初始化
+            if 'pro' not in globals():
+                pro = ts.pro_api()
+            df = pro.daily(
                 ts_code=ts_code,
                 adj=adj_flag,
                 start_date=start,
                 end_date=end,
-                freq="D",
             )
             break
         except Exception as e:
@@ -150,6 +257,8 @@ def _get_kline_tushare(code: str, start: str, end: str, adjust: str) -> pd.DataF
 def _get_kline_akshare(code: str, start: str, end: str, adjust: str) -> pd.DataFrame:
     for attempt in range(1, 4):
         try:
+            # 添加短暂延迟减少请求频率
+            time.sleep(random.uniform(0.1, 0.3))
             df = ak.stock_zh_a_hist(
                 symbol=code,
                 period="daily",
@@ -160,7 +269,7 @@ def _get_kline_akshare(code: str, start: str, end: str, adjust: str) -> pd.DataF
             break
         except Exception as e:
             logger.warning("AKShare 拉取 %s 失败(%d/3): %s", code, attempt, e)
-            time.sleep(random.uniform(1, 2) * attempt)
+            time.sleep(random.uniform(1, 3) * attempt)  # 增加退避时间
     else:
         return pd.DataFrame()
 
@@ -233,6 +342,7 @@ def validate(df: pd.DataFrame) -> pd.DataFrame:
 
 def drop_dup_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[:, ~df.columns.duplicated()]
+
 # ---------- 单只股票抓取 ---------- #
 def fetch_one(
     code: str,
@@ -292,21 +402,32 @@ def main():
     parser = argparse.ArgumentParser(description="按市值筛选 A 股并抓取历史 K 线")
     parser.add_argument("--datasource", choices=["tushare", "akshare", "mootdx"], default="tushare", help="历史 K 线数据源")
     parser.add_argument("--frequency", type=int, choices=list(_FREQ_MAP.keys()), default=4, help="K线频率编码，参见说明")
-    parser.add_argument("--exclude-gem", default=True, help="True则排除创业板/科创板/北交所")
+    parser.add_argument("--exclude-gem", action="store_true", help="排除创业板/科创板/北交所")
+    parser.add_argument("--include-kcb", action="store_true", help="包含科创板（688开头）")
     parser.add_argument("--min-mktcap", type=float, default=5e9, help="最小总市值（含），单位：元")
     parser.add_argument("--max-mktcap", type=float, default=float("+inf"), help="最大总市值（含），单位：元，默认无限制")
+    parser.add_argument("--skip-mktcap", action="store_true", help="跳过市值筛选，直接使用本地已有股票")
+    parser.add_argument("--only-appendix", action="store_true", help="只处理 appendix.json 中的股票")
+    parser.add_argument("--combined-appendix", action="store_true", help="只处理沪深300、A500和appendix.json中的股票")
     parser.add_argument("--start", default="20190101", help="起始日期 YYYYMMDD 或 'today'")
     parser.add_argument("--end", default="today", help="结束日期 YYYYMMDD 或 'today'")
     parser.add_argument("--out", default="./data", help="输出目录")
-    parser.add_argument("--workers", type=int, default=3, help="并发线程数")
+    parser.add_argument("--workers", type=int, default=10, help="并发线程数")
     args = parser.parse_args()
 
     # ---------- Token 处理 ---------- #
+    pro = None
     if args.datasource == "tushare":
         ts_token = " "  # 在这里补充token
+        if not ts_token.strip():
+            logger.warning("Tushare token 未设置，可能会有访问限制")
         ts.set_token(ts_token)
-        global pro
-        pro = ts.pro_api()
+        try:
+            pro = ts.pro_api()
+        except Exception as e:
+            logger.error("Tushare API 初始化失败: %s", e)
+            if not args.only_appendix and not args.combined_appendix:  # 只有在不是仅使用特定股票池的时候才退出
+                sys.exit(1)
 
     # ---------- 日期解析 ---------- #
     start = dt.date.today().strftime("%Y%m%d") if args.start.lower() == "today" else args.start
@@ -316,20 +437,60 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # ---------- 市值快照 & 股票池 ---------- #
-    mktcap_df = _get_mktcap_ak()    
-
-    codes_from_filter = get_constituents(
-        args.min_mktcap,
-        args.max_mktcap,
-        args.exclude_gem,
-        mktcap_df=mktcap_df,
-    )    
-    # 加上本地已有的股票，确保旧数据也能更新
-    local_codes = [p.stem for p in out_dir.glob("*.csv")]
-    codes = sorted(set(codes_from_filter) | set(local_codes))
+    if args.only_appendix:
+        logger.info("只处理 appendix.json 中的股票")
+        mktcap_df = pd.DataFrame(columns=["code", "mktcap"])
+        codes_from_filter = get_constituents(
+            0,  # min_cap 不重要
+            float("+inf"),  # max_cap 不重要
+            False,  # exclude_gem 不重要
+            False,  # include_kcb 不重要
+            True,   # only_appendix = True
+            False,  # combined_appendix = False
+            mktcap_df=mktcap_df,
+        )
+    elif args.combined_appendix:
+        logger.info("只处理沪深300、A500和appendix.json中的股票")
+        mktcap_df = pd.DataFrame(columns=["code", "mktcap"])
+        codes_from_filter = get_constituents(
+            0,  # min_cap 不重要
+            float("+inf"),  # max_cap 不重要
+            False,  # exclude_gem 不重要
+            False,  # include_kcb 不重要
+            False,  # only_appendix = False
+            True,   # combined_appendix = True
+            mktcap_df=mktcap_df,
+        )
+    elif args.skip_mktcap:
+        logger.info("跳过市值筛选，仅使用本地已有股票")
+        mktcap_df = pd.DataFrame(columns=["code", "mktcap"])
+        codes_from_filter = []
+    else:
+        mktcap_df = _get_mktcap_ak()    
+        codes_from_filter = get_constituents(
+            args.min_mktcap,
+            args.max_mktcap,
+            args.exclude_gem,
+            args.include_kcb,
+            False,  # only_appendix = False
+            False,  # combined_appendix = False
+            mktcap_df=mktcap_df,
+        )    
+    
+    # 加上本地已有的股票，确保旧数据也能更新（除非是只处理特定股票池模式）
+    if args.only_appendix or args.combined_appendix:
+        codes = codes_from_filter  # 只使用指定的股票池
+    else:
+        local_codes = [p.stem for p in out_dir.glob("*.csv")]
+        codes = sorted(set(codes_from_filter) | set(local_codes))
 
     if not codes:
-        logger.error("筛选结果为空，请调整参数！")
+        if args.only_appendix:
+            logger.error("appendix.json 为空或不存在，没有股票可处理！")
+        elif args.combined_appendix:
+            logger.error("沪深300、A500和appendix.json股票池为空，没有股票可处理！")
+        else:
+            logger.error("筛选结果为空，请调整参数或检查 %s 目录是否有已存在的 CSV 文件！", out_dir)
         sys.exit(1)
 
     logger.info(
@@ -342,7 +503,11 @@ def main():
     )
 
     # ---------- 多线程抓取 ---------- #
-    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+    # 降低并发数减少网络错误
+    max_workers = min(args.workers, 10) if args.datasource == "akshare" else args.workers
+    logger.info("使用 %d 个并发线程", max_workers)
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(
                 fetch_one,
@@ -356,8 +521,18 @@ def main():
             )
             for code in codes
         ]
-        for _ in tqdm(as_completed(futures), total=len(futures), desc="下载进度"):
-            pass
+        
+        completed_count = 0
+        failed_count = 0
+        for future in tqdm(as_completed(futures), total=len(futures), desc="下载进度"):
+            try:
+                future.result()  # 获取结果，这样可以捕获异常
+                completed_count += 1
+            except Exception as e:
+                failed_count += 1
+                logger.error("任务执行失败: %s", e)
+
+    logger.info("任务完成: 成功 %d, 失败 %d", completed_count, failed_count)
 
     logger.info("全部任务完成，数据已保存至 %s", out_dir.resolve())
 
