@@ -409,6 +409,7 @@ def main():
     parser.add_argument("--skip-mktcap", action="store_true", help="跳过市值筛选，直接使用本地已有股票")
     parser.add_argument("--only-appendix", action="store_true", help="只处理 appendix.json 中的股票")
     parser.add_argument("--combined-appendix", action="store_true", help="只处理沪深300、A500和appendix.json中的股票")
+    parser.add_argument("--tickers", help="指定股票代码，用逗号分隔（如：000001,600000,300001）")
     parser.add_argument("--start", default="20190101", help="起始日期 YYYYMMDD 或 'today'")
     parser.add_argument("--end", default="today", help="结束日期 YYYYMMDD 或 'today'")
     parser.add_argument("--out", default="./data", help="输出目录")
@@ -436,7 +437,11 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # ---------- 市值快照 & 股票池 ---------- #
-    if args.only_appendix:
+    if args.tickers:
+        # 使用用户指定的股票代码
+        codes_from_filter = [code.strip() for code in args.tickers.split(",") if code.strip()]
+        logger.info("使用用户指定的 %d 只股票: %s", len(codes_from_filter), ", ".join(codes_from_filter))
+    elif args.only_appendix:
         logger.info("只处理 appendix.json 中的股票")
         mktcap_df = pd.DataFrame(columns=["code", "mktcap"])
         codes_from_filter = get_constituents(
@@ -477,14 +482,16 @@ def main():
         )    
     
     # 加上本地已有的股票，确保旧数据也能更新（除非是只处理特定股票池模式）
-    if args.only_appendix or args.combined_appendix:
+    if args.tickers or args.only_appendix or args.combined_appendix:
         codes = codes_from_filter  # 只使用指定的股票池
     else:
         local_codes = [p.stem for p in out_dir.glob("*.csv")]
         codes = sorted(set(codes_from_filter) | set(local_codes))
 
     if not codes:
-        if args.only_appendix:
+        if args.tickers:
+            logger.error("指定的股票代码为空或无效！")
+        elif args.only_appendix:
             logger.error("appendix.json 为空或不存在，没有股票可处理！")
         elif args.combined_appendix:
             logger.error("沪深300、A500和appendix.json股票池为空，没有股票可处理！")
