@@ -17,7 +17,7 @@ venvstock┌─[rehuang@PKW7HQP2QT] - [~/python/StockTradebyZ-main] - [2025-07-2
 /Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python select_stock.py --help
 /Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python select_stock.py --only-appendix
 
-/Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python select_stock.py --only-appendix --date "2024-12-01"
+/Users/rehuang/Documents/GitHub/StockTradebyZ/.venv/bin/python select_stock.py --only-appendix --date "2024-12-01"
 
 
 # 只处理 appendix.json 中的股票

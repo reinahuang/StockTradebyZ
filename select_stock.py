@@ -85,27 +85,25 @@ def load_hs300_codes() -> List[str]:
         
         # 尝试不同的API方法
         try:
-            df = ak.index_stock_cons_csindex(symbol='000300')
-            codes = df['成分券代码'].tolist()
-        except:
-            # 备选方法
-            df = ak.stock_zh_index_spot_em(symbol='sh000300')
-            if not df.empty:
-                # 这个API返回的是指数信息，我们需要用其他方法
+            df = ak.index_stock_cons_sina(symbol='000300')
+            codes = df['code'].tolist()
+            logger.info("成功获取沪深300成分股 %d 只", len(codes))
+            return codes
+        except Exception as e1:
+            logger.warning("index_stock_cons_sina失败: %s", e1)
+            try:
+                df = ak.index_stock_cons_csindex(symbol='000300')
+                codes = df['成分券代码'].tolist()
+                logger.info("成功获取沪深300成分股 %d 只", len(codes))
+                return codes
+            except Exception as e2:
+                logger.warning("index_stock_cons_csindex失败: %s", e2)
                 # 作为备选，返回一些知名的沪深300股票
                 codes = ['000001', '000002', '000858', '600000', '600036', '600519', 
                         '000568', '002415', '300014', '600276', '000725', '002714',
                         '600887', '002236', '600031', '000063', '600104', '000166']
-                logger.info("使用备选沪深300股票列表")
-            else:
-                codes = []
-        
-        if not codes:
-            logger.warning("获取沪深300成分股失败，返回空列表")
-            return []
-        
-        logger.info("获取沪深300成分股 %d 只", len(codes))
-        return codes
+                logger.info("使用备选沪深300股票列表 %d 只", len(codes))
+                return codes
     except Exception as e:
         logger.error("获取沪深300成分股失败: %s", e)
         # 返回一些知名的沪深300股票作为备选
@@ -123,21 +121,25 @@ def load_a500_codes() -> List[str]:
         
         # 尝试不同的API方法
         try:
-            df = ak.index_stock_cons_csindex(symbol='000905')
-            codes = df['成分券代码'].tolist()
-        except:
-            # 作为备选，返回一些中证500的代表性股票
-            codes = ['002027', '002129', '002142', '002252', '002311', '002375',
-                    '002405', '002493', '002508', '002624', '002677', '002709',
-                    '300033', '300059', '300070', '300122', '300144', '300207']
-            logger.info("使用备选A500股票列表")
-        
-        if not codes:
-            logger.warning("获取 A500 成分股失败，返回空列表")
-            return []
-        
-        logger.info("获取 A500 成分股 %d 只", len(codes))
-        return codes
+            df = ak.index_stock_cons_sina(symbol='000905')
+            codes = df['code'].tolist()
+            logger.info("成功获取A500成分股 %d 只", len(codes))
+            return codes
+        except Exception as e1:
+            logger.warning("index_stock_cons_sina失败: %s", e1)
+            try:
+                df = ak.index_stock_cons_csindex(symbol='000905')
+                codes = df['成分券代码'].tolist()
+                logger.info("成功获取A500成分股 %d 只", len(codes))
+                return codes
+            except Exception as e2:
+                logger.warning("index_stock_cons_csindex失败: %s", e2)
+                # 作为备选，返回一些中证500的代表性股票
+                codes = ['002027', '002129', '002142', '002252', '002311', '002375',
+                        '002405', '002493', '002508', '002624', '002677', '002709',
+                        '300033', '300059', '300070', '300122', '300144', '300207']
+                logger.info("使用备选A500股票列表 %d 只", len(codes))
+                return codes
     except Exception as e:
         logger.error("获取 A500 成分股失败: %s", e)
         # 返回一些中证500的代表性股票作为备选
