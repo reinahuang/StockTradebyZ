@@ -14861,3 +14861,13 @@
 2025-07-22 09:59:43,612 [WARNING] fetch_kline.py:271 AKShare 拉取 603505 失败(2/3): ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
 2025-07-22 10:00:07,577 [INFO] fetch_kline.py:534 任务完成: 成功 2970, 失败 0
 2025-07-22 10:00:07,577 [INFO] fetch_kline.py:536 全部任务完成，数据已保存至 /Users/rehuang/Documents/GitHub/StockTradebyZ/data
+2025-07-22 10:53:48,757 [INFO] fetch_kline.py:452 只处理沪深300、A500和appendix.json中的股票
+2025-07-22 10:53:48,758 [INFO] fetch_kline.py:63 正在获取沪深300成分股列表...
+2025-07-22 10:53:53,798 [INFO] fetch_kline.py:68 成功获取沪深300成分股 300 只
+2025-07-22 10:53:53,798 [INFO] fetch_kline.py:97 正在获取A500(中证500)成分股列表...
+2025-07-22 10:53:54,909 [INFO] fetch_kline.py:102 成功获取A500成分股 500 只
+2025-07-22 10:53:54,909 [INFO] fetch_kline.py:158 沪深300 + A500 + appendix.json 总计 773 只股票 (沪深300: 300, A500: 500, appendix: 1)
+2025-07-22 10:53:54,909 [INFO] fetch_kline.py:495 开始抓取 773 支股票 | 数据源:akshare | 频率:day | 日期:20190101 → 20250721
+2025-07-22 10:53:54,910 [INFO] fetch_kline.py:507 使用 10 个并发线程
+2025-07-22 10:54:01,775 [INFO] fetch_kline.py:534 任务完成: 成功 773, 失败 0
+2025-07-22 10:54:01,776 [INFO] fetch_kline.py:536 全部任务完成，数据已保存至 /Users/rehuang/Documents/GitHub/StockTradebyZ/data
