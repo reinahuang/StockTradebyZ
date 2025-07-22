@@ -400,7 +400,7 @@ def fetch_one(
 
 def main():
     parser = argparse.ArgumentParser(description="按市值筛选 A 股并抓取历史 K 线")
-    parser.add_argument("--datasource", choices=["tushare", "akshare", "mootdx"], default="tushare", help="历史 K 线数据源")
+    parser.add_argument("--datasource", choices=["tushare", "akshare", "mootdx"], default="akshare", help="历史 K 线数据源")
     parser.add_argument("--frequency", type=int, choices=list(_FREQ_MAP.keys()), default=4, help="K线频率编码，参见说明")
     parser.add_argument("--exclude-gem", action="store_true", help="排除创业板/科创板/北交所")
     parser.add_argument("--include-kcb", action="store_true", help="包含科创板（688开头）")
@@ -426,8 +426,7 @@ def main():
             pro = ts.pro_api()
         except Exception as e:
             logger.error("Tushare API 初始化失败: %s", e)
-            if not args.only_appendix and not args.combined_appendix:  # 只有在不是仅使用特定股票池的时候才退出
-                sys.exit(1)
+            sys.exit(1)
 
     # ---------- 日期解析 ---------- #
     start = dt.date.today().strftime("%Y%m%d") if args.start.lower() == "today" else args.start
