@@ -1,0 +1,53 @@
+
+包含科创板股票：
+python fetch_kline.py --include-kcb --datasource akshare
+排除所有特殊板块（传统模式）：
+python fetch_kline.py --exclude-gem --datasource akshare
+只包含主板和科创板（排除创业板和北交所）：
+python fetch_kline.py --exclude-gem --include-kcb --datasource akshare
+
+venvstock┌─[rehuang@PKW7HQP2QT] - [~/python/StockTradebyZ-main] 
+
+venvstock┌─[rehuang@PKW7HQP2QT] - [~/python/StockTradebyZ-main] - [2025-07-21 09:39:15]
+└─[0] <> /Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python fetch_kline.py --help
+
+
+/Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python fetch_kline.py --only-appendix --start 20241201 --end 20241231
+
+/Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python select_stock.py --help
+/Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python select_stock.py --only-appendix
+
+/Users/rehuang/python/StockTradebyZ-main/venvstock/bin/python select_stock.py --only-appendix --date "2024-12-01"
+
+
+# 只处理 appendix.json 中的股票
+python select_stock.py --only-appendix
+
+# 处理沪深300、A500和appendix.json中的股票
+python select_stock.py --combined-appendix
+
+# 处理所有股票（默认）
+python select_stock.py
+
+# 指定特定股票
+python select_stock.py --tickers "000001,600000,002527"
+
+
+
+ 1. 处理所有股票（默认，按市值筛选）
+python fetch_kline.py
+
+# 2. 只处理 appendix.json 中的股票
+python fetch_kline.py --only-appendix
+
+# 3. 只处理沪深300、A500和appendix.json中的股票（新功能）
+python fetch_kline.py --combined-appendix
+
+# 4. 跳过市值筛选，使用本地已有股票
+python fetch_kline.py --skip-mktcap
+
+
+python fetch_kline.py --combined-appendix --datasource akshare --start 20250720 --end 20250721 --workers 5
+
+/Users/rehuang/Documents/GitHub/StockTradebyZ/.venv/bin/python fetch_kline.py --help
+/Users/rehuang/Documents/GitHub/StockTradebyZ/.venv/bin/python fetch_kline.py --start 20250720 --end 20250722
