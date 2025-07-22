@@ -14877,3 +14877,9 @@
 2025-07-22 11:04:10,152 [INFO] fetch_kline.py:507 使用 10 个并发线程
 2025-07-22 11:04:10,994 [INFO] fetch_kline.py:534 任务完成: 成功 1, 失败 0
 2025-07-22 11:04:10,994 [INFO] fetch_kline.py:536 全部任务完成，数据已保存至 /Users/rehuang/Documents/GitHub/StockTradebyZ/data
+2025-07-22 11:07:15,835 [INFO] fetch_kline.py:440 只处理 appendix.json 中的股票
+2025-07-22 11:07:15,835 [INFO] fetch_kline.py:148 只处理 appendix.json 中的 1 只股票
+2025-07-22 11:07:15,835 [INFO] fetch_kline.py:495 开始抓取 1 支股票 | 数据源:akshare | 频率:day | 日期:20190101 → 20250722
+2025-07-22 11:07:15,836 [INFO] fetch_kline.py:507 使用 10 个并发线程
+2025-07-22 11:07:16,565 [INFO] fetch_kline.py:534 任务完成: 成功 1, 失败 0
+2025-07-22 11:07:16,565 [INFO] fetch_kline.py:536 全部任务完成，数据已保存至 /Users/rehuang/Documents/GitHub/StockTradebyZ/data
