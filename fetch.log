@@ -15542,3 +15542,18 @@
 2025-07-22 14:54:10,001 [WARNING] fetch_kline.py:271 AKShare 拉取 002756 失败(3/3): ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
 2025-07-22 14:54:16,315 [INFO] fetch_kline.py:541 任务完成: 成功 773, 失败 0
 2025-07-22 14:54:16,315 [INFO] fetch_kline.py:543 全部任务完成，数据已保存至 /Users/rehuang/Documents/GitHub/StockTradebyZ/data
+2025-07-23 11:17:51,368 [INFO] fetch_kline.py:445 只处理 appendix.json 中的股票
+2025-07-23 11:17:51,369 [INFO] fetch_kline.py:148 只处理 appendix.json 中的 3 只股票
+2025-07-23 11:17:51,369 [INFO] fetch_kline.py:502 开始抓取 3 支股票 | 数据源:akshare | 频率:day | 日期:20250720 → 20250723
+2025-07-23 11:17:51,369 [INFO] fetch_kline.py:514 使用 10 个并发线程
+2025-07-23 11:17:52,095 [INFO] fetch_kline.py:541 任务完成: 成功 3, 失败 0
+2025-07-23 11:17:52,095 [INFO] fetch_kline.py:543 全部任务完成，数据已保存至 /Users/rehuang/Documents/GitHub/StockTradebyZ/data
+2025-07-23 12:13:57,318 [INFO] fetch_kline.py:445 只处理 appendix.json 中的股票
+2025-07-23 12:13:57,319 [WARNING] fetch_kline.py:146 appendix.json 为空或不存在，没有股票可处理
+2025-07-23 12:13:57,319 [ERROR] fetch_kline.py:495 appendix.json 为空或不存在，没有股票可处理！
+2025-07-23 12:16:14,472 [INFO] fetch_kline.py:445 只处理 appendix.json 中的股票
+2025-07-23 12:16:14,472 [INFO] fetch_kline.py:148 只处理 appendix.json 中的 19 只股票
+2025-07-23 12:16:14,472 [INFO] fetch_kline.py:502 开始抓取 19 支股票 | 数据源:akshare | 频率:day | 日期:20250101 → 20250123
+2025-07-23 12:16:14,472 [INFO] fetch_kline.py:514 使用 10 个并发线程
+2025-07-23 12:16:15,047 [INFO] fetch_kline.py:541 任务完成: 成功 19, 失败 0
+2025-07-23 12:16:15,047 [INFO] fetch_kline.py:543 全部任务完成，数据已保存至 /Users/rehuang/Documents/GitHub/StockTradebyZ/data
