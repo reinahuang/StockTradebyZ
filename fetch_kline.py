@@ -146,7 +146,7 @@ def get_constituents(
             logger.warning("appendix.json 为空或不存在，没有股票可处理")
             return []
         logger.info("只处理 appendix.json 中的 %d 只股票", len(appendix_codes))
-        return appendix_codes
+        return [code.zfill(6) for code in appendix_codes]  # 移动到这里
     
     # 如果使用沪深300 + A500 + appendix.json组合
     if combined_appendix:
@@ -178,7 +178,6 @@ def get_constituents(
     # 如果不专门包含科创板，则排除科创板
     if not include_kcb:
         cond &= ~df["code"].str.startswith("688")
-        return [code.zfill(6) for code in appendix_codes]
     
     codes = df.loc[cond, "code"].str.zfill(6).tolist()
     codes = list(dict.fromkeys(appendix_codes + codes))  # 去重保持顺序
@@ -255,10 +254,12 @@ def _get_kline_tushare(code: str, start: str, end: str, adjust: str) -> pd.DataF
 # ---------- AKShare 工具函数 ---------- #
 
 def _get_kline_akshare(code: str, start: str, end: str, adjust: str) -> pd.DataFrame:
-    for attempt in range(1, 4):
+    for attempt in range(1, 6):  # 增加到5次重试
         try:
-            # 添加短暂延迟减少请求频率
-            time.sleep(random.uniform(0.1, 0.3))
+            # 根据重试次数动态调整延迟
+            delay = random.uniform(0.5, 1.5) * attempt
+            time.sleep(delay)
+            
             df = ak.stock_zh_a_hist(
                 symbol=code,
                 period="daily",
@@ -266,28 +267,37 @@ def _get_kline_akshare(code: str, start: str, end: str, adjust: str) -> pd.DataF
                 end_date=end,
                 adjust=adjust,
             )
-            break
+            
+            if df is not None and not df.empty:
+                # 确保列名正确
+                if "日期" in df.columns:
+                    df = df.rename(columns=COLUMN_MAP_HIST_AK)
+                
+                # 检查必要的列是否存在
+                required_cols = ["date", "open", "close", "high", "low", "volume"]
+                if all(col in df.columns for col in required_cols):
+                    # 确保date列是datetime类型
+                    df["date"] = pd.to_datetime(df["date"])
+                    # 确保数值列是数值类型
+                    numeric_cols = ["open", "close", "high", "low", "volume"]
+                    for col in numeric_cols:
+                        if col in df.columns:
+                            df[col] = pd.to_numeric(df[col], errors="coerce")
+                    
+                    return df[required_cols].copy()
+                else:
+                    logger.warning("AKShare返回数据缺少必要列，当前列: %s", list(df.columns))
+                    
         except Exception as e:
-            logger.warning("AKShare 拉取 %s 失败(%d/3): %s", code, attempt, e)
-            time.sleep(random.uniform(1, 3) * attempt)  # 增加退避时间
-    else:
-        return pd.DataFrame()
+            logger.warning("AKShare 拉取 %s 失败(%d/5): %s", code, attempt, e)
+            # 指数退避，越往后等待时间越长
+            backoff_time = random.uniform(2, 8) * (attempt ** 2)
+            time.sleep(backoff_time)
+    
+    logger.error("AKShare 拉取 %s 最终失败，已尝试5次", code)
+    return pd.DataFrame()
 
-    if df is None or df.empty:
-        return pd.DataFrame()
-
-    df = (
-        df[list(COLUMN_MAP_HIST_AK)]
-        .rename(columns=COLUMN_MAP_HIST_AK)
-        .assign(date=lambda x: pd.to_datetime(x["date"]))
-    )
-    df[[c for c in df.columns if c != "date"]] = df[[c for c in df.columns if c != "date"]].apply(
-        pd.to_numeric, errors="coerce"
-    )
-    df = df[["date", "open", "close", "high", "low", "volume"]]
-    return df.sort_values("date").reset_index(drop=True)
-
-# ---------- Mootdx 工具函数 ---------- #
+# ---------- Mootdx 工具函数 ----------
 
 def _get_kline_mootdx(code: str, start: str, end: str, adjust: str, freq_code: int) -> pd.DataFrame:    
     symbol = code.zfill(6)
@@ -333,11 +343,34 @@ def get_kline(
 # ---------- 数据校验 ---------- #
 
 def validate(df: pd.DataFrame) -> pd.DataFrame:
+    # 检查数据框是否为空
+    if df.empty:
+        return df
+    
+    # 检查是否存在必要的列
+    required_columns = ['date', 'open', 'close', 'high', 'low', 'volume']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    
+    if missing_columns:
+        logger.warning("数据缺少必要列: %s，当前列: %s", missing_columns, list(df.columns))
+        # 如果缺少关键列，返回空DataFrame
+        if 'date' in missing_columns:
+            logger.error("数据缺少date列，无法处理")
+            return pd.DataFrame(columns=required_columns)
+    
+    # 去重并排序
     df = df.drop_duplicates(subset="date").sort_values("date").reset_index(drop=True)
+    
+    # 检查日期列
     if df["date"].isna().any():
-        raise ValueError("存在缺失日期！")
+        logger.warning("存在缺失日期，将删除这些行")
+        df = df.dropna(subset=['date'])
+    
+    # 检查未来日期
     if (df["date"] > pd.Timestamp.today()).any():
-        raise ValueError("数据包含未来日期，可能抓取错误！")
+        logger.warning("数据包含未来日期，将删除这些行")
+        df = df[df["date"] <= pd.Timestamp.today()]
+    
     return df
 
 def drop_dup_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -359,13 +392,14 @@ def fetch_one(
     if incremental and csv_path.exists():
         try:
             existing = pd.read_csv(csv_path, parse_dates=["date"])
-            last_date = existing["date"].max()
-            if last_date.date() > pd.to_datetime(end, format="%Y%m%d").date():
-                logger.debug("%s 已是最新，无需更新", code)
-                return
-            start = last_date.strftime("%Y%m%d")
-        except Exception:
-            logger.exception("读取 %s 失败，将重新下载", csv_path)
+            if not existing.empty and "date" in existing.columns:
+                last_date = existing["date"].max()
+                if last_date.date() > pd.to_datetime(end, format="%Y%m%d").date():
+                    logger.debug("%s 已是最新，无需更新", code)
+                    return
+                start = last_date.strftime("%Y%m%d")
+        except Exception as e:
+            logger.warning("读取 %s 失败，将重新下载: %s", csv_path, e)
 
     for attempt in range(1, 4):
         try:            
@@ -373,24 +407,36 @@ def fetch_one(
             if new_df.empty:
                 logger.debug("%s 无新数据", code)
                 break
+                
+            # 验证数据
             new_df = validate(new_df)
+            if new_df.empty:
+                logger.warning("%s 验证后数据为空", code)
+                break
+                
             if csv_path.exists() and incremental:
-                old_df = pd.read_csv(
-                    csv_path,
-                    parse_dates=["date"],
-                    index_col=False
-                )
-                old_df = drop_dup_columns(old_df)
-                new_df = drop_dup_columns(new_df)
-                new_df = (
-                    pd.concat([old_df, new_df], ignore_index=True)
-                    .drop_duplicates(subset="date")
-                    .sort_values("date")
-                )
+                try:
+                    old_df = pd.read_csv(
+                        csv_path,
+                        parse_dates=["date"],
+                        index_col=False
+                    )
+                    old_df = drop_dup_columns(old_df)
+                    new_df = drop_dup_columns(new_df)
+                    new_df = (
+                        pd.concat([old_df, new_df], ignore_index=True)
+                        .drop_duplicates(subset="date")
+                        .sort_values("date")
+                    )
+                except Exception as e:
+                    logger.warning("%s 合并数据失败，使用新数据: %s", code, e)
+                    
             new_df.to_csv(csv_path, index=False)
+            logger.debug("%s 下载完成，共 %d 条记录", code, len(new_df))
             break
-        except Exception:
-            logger.exception("%s 第 %d 次抓取失败", code, attempt)
+            
+        except Exception as e:
+            logger.warning("%s 第 %d 次抓取失败: %s", code, attempt, e)
             time.sleep(random.uniform(1, 3) * attempt)  # 指数退避
     else:
         logger.error("%s 三次抓取均失败，已跳过！", code)
@@ -513,6 +559,9 @@ def main():
     max_workers = min(args.workers, 10) if args.datasource == "akshare" else args.workers
     logger.info("使用 %d 个并发线程", max_workers)
     
+    completed_count = 0
+    failed_count = 0
+    
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(
@@ -528,18 +577,15 @@ def main():
             for code in codes
         ]
         
-        completed_count = 0
-        failed_count = 0
         for future in tqdm(as_completed(futures), total=len(futures), desc="下载进度"):
             try:
                 future.result()  # 获取结果，这样可以捕获异常
                 completed_count += 1
             except Exception as e:
-                failed_count += 1
                 logger.error("任务执行失败: %s", e)
+                failed_count += 1
 
     logger.info("任务完成: 成功 %d, 失败 %d", completed_count, failed_count)
-
     logger.info("全部任务完成，数据已保存至 %s", out_dir.resolve())
 
 
