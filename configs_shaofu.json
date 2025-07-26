@@ -1,0 +1,30 @@
+{
+    "selectors": [
+        {
+            "alias": "少妇战法-标准版",
+            "class": "BBIKDJSelector",
+            "activate": true,
+            "params": {
+                "j_threshold": 1,
+                "bbi_min_window": 20,
+                "max_window": 60,
+                "price_range_pct": 0.5,
+                "bbi_q_threshold": 0.1,
+                "j_q_threshold": 0.10
+            }
+        },
+        {
+            "alias": "少妇战法-调试版",
+            "class": "BBIKDJSelector", 
+            "activate": false,
+            "params": {
+                "j_threshold": 10,
+                "bbi_min_window": 20,
+                "max_window": 60,
+                "price_range_pct": 0.8,
+                "bbi_q_threshold": 0.2,
+                "j_q_threshold": 0.20
+            }
+        }
+    ]
+}

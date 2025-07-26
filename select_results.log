@@ -575,3 +575,78 @@
 2025-07-26 11:26:37,524 [INFO] 交易日: 2025-07-25
 2025-07-26 11:26:37,524 [INFO] 符合条件股票数: 0
 2025-07-26 11:26:37,524 [INFO] 无符合条件股票
+2025-07-26 16:05:10,562 [INFO] 从 appendix.json 加载了 75 只股票
+2025-07-26 16:05:10,660 [ERROR] 配置文件 your_config.json 不存在
+2025-07-26 16:20:10,096 [INFO] 从 appendix.json 加载了 75 只股票
+2025-07-26 16:20:10,194 [ERROR] 配置文件 your_config.json 不存在
+2025-07-26 16:26:25,345 [INFO] 从 appendix.json 加载了 75 只股票
+2025-07-26 16:26:25,444 [INFO] BBIKDJSelector初始化完成，参数: j_threshold=1.00, j_q_threshold=0.10, bbi_q_threshold=0.10
+2025-07-26 16:26:25,499 [INFO] BBIKDJSelector 共选出 0 只股票
+2025-07-26 16:26:25,499 [INFO] 
+2025-07-26 16:26:25,499 [INFO] ============== 选股结果 [少妇战法-标准版] ==============
+2025-07-26 16:26:25,499 [INFO] 交易日: 2025-07-25
+2025-07-26 16:26:25,499 [INFO] 符合条件股票数: 0
+2025-07-26 16:26:25,499 [INFO] 无符合条件股票
+2025-07-26 16:27:09,252 [INFO] 正在获取沪深300成分股列表...
+2025-07-26 16:27:17,748 [INFO] 成功获取沪深300成分股 300 只
+2025-07-26 16:27:17,748 [INFO] 正在获取 A500 (中证500) 成分股列表...
+2025-07-26 16:27:18,813 [INFO] 成功获取A500成分股 500 只
+2025-07-26 16:27:18,813 [INFO] 从 appendix.json 加载了 75 只股票
+2025-07-26 16:27:18,813 [INFO] 沪深300 + A500 + appendix.json 总计 811 只股票 (沪深300: 300, A500: 500, appendix: 75)
+2025-07-26 16:27:19,815 [INFO] BBIKDJSelector初始化完成，参数: j_threshold=1.00, j_q_threshold=0.10, bbi_q_threshold=0.10
+2025-07-26 16:27:20,385 [INFO] BBIKDJSelector 共选出 0 只股票
+2025-07-26 16:27:20,385 [INFO] 
+2025-07-26 16:27:20,385 [INFO] ============== 选股结果 [少妇战法-标准版] ==============
+2025-07-26 16:27:20,385 [INFO] 交易日: 2025-07-25
+2025-07-26 16:27:20,385 [INFO] 符合条件股票数: 0
+2025-07-26 16:27:20,385 [INFO] 无符合条件股票
+2025-07-26 16:28:53,996 [INFO] BBIKDJSelector初始化完成，参数: j_threshold=1.00, j_q_threshold=0.10, bbi_q_threshold=0.10
+2025-07-26 16:28:53,997 [INFO] BBIKDJSelector 共选出 0 只股票
+2025-07-26 16:28:53,997 [INFO] 
+2025-07-26 16:28:53,997 [INFO] ============== 选股结果 [少妇战法-标准版] ==============
+2025-07-26 16:28:53,997 [INFO] 交易日: 2025-07-25
+2025-07-26 16:28:53,997 [INFO] 符合条件股票数: 0
+2025-07-26 16:28:53,997 [INFO] 无符合条件股票
+2025-07-26 16:29:11,680 [INFO] BBIKDJSelector初始化完成，参数: j_threshold=1.00, j_q_threshold=0.10, bbi_q_threshold=0.10
+2025-07-26 16:29:11,682 [INFO] BBIKDJSelector 共选出 0 只股票
+2025-07-26 16:29:11,682 [INFO] 
+2025-07-26 16:29:11,682 [INFO] ============== 选股结果 [少妇战法-标准版] ==============
+2025-07-26 16:29:11,682 [INFO] 交易日: 2025-07-25
+2025-07-26 16:29:11,682 [INFO] 符合条件股票数: 0
+2025-07-26 16:29:11,682 [INFO] 无符合条件股票
+2025-07-26 16:29:19,499 [INFO] 正在获取沪深300成分股列表...
+2025-07-26 16:29:23,720 [INFO] 成功获取沪深300成分股 300 只
+2025-07-26 16:29:23,721 [INFO] 正在获取 A500 (中证500) 成分股列表...
+2025-07-26 16:29:24,811 [INFO] 成功获取A500成分股 500 只
+2025-07-26 16:29:24,812 [INFO] 从 appendix.json 加载了 75 只股票
+2025-07-26 16:29:24,812 [INFO] 沪深300 + A500 + appendix.json 总计 811 只股票 (沪深300: 300, A500: 500, appendix: 75)
+2025-07-26 16:29:25,823 [INFO] BBIKDJSelector初始化完成，参数: j_threshold=1.00, j_q_threshold=0.10, bbi_q_threshold=0.10
+2025-07-26 16:29:26,407 [INFO] BBIKDJSelector 共选出 0 只股票
+2025-07-26 16:29:26,407 [INFO] 
+2025-07-26 16:29:26,407 [INFO] ============== 选股结果 [少妇战法-标准版] ==============
+2025-07-26 16:29:26,407 [INFO] 交易日: 2025-07-25
+2025-07-26 16:29:26,407 [INFO] 符合条件股票数: 0
+2025-07-26 16:29:26,407 [INFO] 无符合条件股票
+2025-07-26 16:30:36,301 [INFO] BBIKDJSelector初始化完成，参数: j_threshold=1.00, j_q_threshold=0.10, bbi_q_threshold=0.10
+2025-07-26 16:30:36,302 [INFO] BBIKDJSelector 共选出 0 只股票
+2025-07-26 16:30:36,302 [INFO] 
+2025-07-26 16:30:36,302 [INFO] ============== 选股结果 [少妇战法-标准版] ==============
+2025-07-26 16:30:36,302 [INFO] 交易日: 2025-07-25
+2025-07-26 16:30:36,302 [INFO] 符合条件股票数: 0
+2025-07-26 16:30:36,302 [INFO] 无符合条件股票
+2025-07-26 16:35:22,215 [INFO] 正在获取沪深300成分股列表...
+2025-07-26 16:35:28,142 [INFO] 成功获取沪深300成分股 300 只
+2025-07-26 16:35:28,143 [INFO] 正在获取 A500 (中证500) 成分股列表...
+2025-07-26 16:35:28,600 [INFO] 成功获取A500成分股 500 只
+2025-07-26 16:35:28,601 [INFO] 从 appendix.json 加载了 75 只股票
+2025-07-26 16:35:28,601 [INFO] 沪深300 + A500 + appendix.json 总计 811 只股票 (沪深300: 300, A500: 500, appendix: 75)
+2025-07-26 16:35:29,811 [INFO] BBIKDJSelector初始化完成，参数: j_threshold=1.00, j_q_threshold=0.10, bbi_q_threshold=0.10
+2025-07-26 16:35:29,891 [INFO] BBIKDJSelector 共选出 0 只股票
+2025-07-26 16:35:29,891 [INFO] 
+2025-07-26 16:35:29,891 [INFO] ============== 选股结果 [少妇战法] ==============
+2025-07-26 16:35:29,891 [INFO] 交易日: 2015-07-25
+2025-07-26 16:35:29,891 [INFO] 符合条件股票数: 0
+2025-07-26 16:35:29,891 [INFO] 无符合条件股票
+2025-07-26 16:35:29,891 [ERROR] 跳过配置 {'class': 'BBIShortLongSelector', 'alias': '补票战法', 'activate': True, 'params': {'n_short': 3, 'n_long': 21, 'm': 3, 'bbi_min_window': 2, 'max_window': 60, 'bbi_q_threshold': 0.2}}：无法加载 Selector.BBIShortLongSelector: module 'Selector' has no attribute 'BBIShortLongSelector'
+2025-07-26 16:35:29,891 [ERROR] 跳过配置 {'class': 'BreakoutVolumeKDJSelector', 'alias': 'TePu战法', 'activate': True, 'params': {'j_threshold': 1, 'j_q_threshold': 0.1, 'up_threshold': 3.0, 'volume_threshold': 0.6667, 'offset': 15, 'max_window': 60, 'price_range_pct': 0.5}}：无法加载 Selector.BreakoutVolumeKDJSelector: module 'Selector' has no attribute 'BreakoutVolumeKDJSelector'
+2025-07-26 16:35:29,891 [ERROR] 跳过配置 {'class': 'PeakKDJSelector', 'alias': '填坑战法', 'activate': True, 'params': {'j_threshold': 10, 'max_window': 100, 'fluc_threshold': 0.03, 'j_q_threshold': 0.1, 'gap_threshold': 0.2}}：无法加载 Selector.PeakKDJSelector: module 'Selector' has no attribute 'PeakKDJSelector'
