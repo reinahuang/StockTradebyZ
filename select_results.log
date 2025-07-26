@@ -650,3 +650,5 @@
 2025-07-26 16:35:29,891 [ERROR] 跳过配置 {'class': 'BBIShortLongSelector', 'alias': '补票战法', 'activate': True, 'params': {'n_short': 3, 'n_long': 21, 'm': 3, 'bbi_min_window': 2, 'max_window': 60, 'bbi_q_threshold': 0.2}}：无法加载 Selector.BBIShortLongSelector: module 'Selector' has no attribute 'BBIShortLongSelector'
 2025-07-26 16:35:29,891 [ERROR] 跳过配置 {'class': 'BreakoutVolumeKDJSelector', 'alias': 'TePu战法', 'activate': True, 'params': {'j_threshold': 1, 'j_q_threshold': 0.1, 'up_threshold': 3.0, 'volume_threshold': 0.6667, 'offset': 15, 'max_window': 60, 'price_range_pct': 0.5}}：无法加载 Selector.BreakoutVolumeKDJSelector: module 'Selector' has no attribute 'BreakoutVolumeKDJSelector'
 2025-07-26 16:35:29,891 [ERROR] 跳过配置 {'class': 'PeakKDJSelector', 'alias': '填坑战法', 'activate': True, 'params': {'j_threshold': 10, 'max_window': 100, 'fluc_threshold': 0.03, 'j_q_threshold': 0.1, 'gap_threshold': 0.2}}：无法加载 Selector.PeakKDJSelector: module 'Selector' has no attribute 'PeakKDJSelector'
+2025-07-26 16:44:02,972 [INFO] 从 appendix.json 加载了 75 只股票
+2025-07-26 16:44:03,071 [ERROR] 配置文件 your_config.json 不存在
