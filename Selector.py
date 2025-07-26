@@ -139,7 +139,7 @@ class BBIShortLongSelector(Selector):
                  n_short: int = 3,
                  n_long: int = 21,
                  m: int = 3,
-                 bbi_min_window: int = 24,  # 改为24，确保BBI计算准确
+                 bbi_min_window: int = 2,  
                  max_window: int = 60,
                  bbi_q_threshold: float = 0.2):
         
@@ -212,9 +212,9 @@ class BBIShortLongSelector(Selector):
                 ma_condition = current_ma_short > current_ma_long
                 
                 # 2. BBI已经脱离底部但还未过高（补票时机）
-                # 从低分位数(20%)上升到中等分位数(20%-60%)之间
+                # BBI必须在历史20%分位数以下
                 bbi_breaking_condition = (bbi_quantile > self.bbi_q_threshold and 
-                                        bbi_quantile <= 0.6)
+                                        bbi_quantile <= 0.2)
                 
                 # 3. 价格有上涨动能（近期上涨确认）
                 if len(recent_df) >= 5:
