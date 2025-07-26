@@ -114,7 +114,7 @@ class BBIKDJSelector(Selector):
                 bbi_quantile = (current_bbi <= bbi_valid).mean()
                 
                 # 选股条件（OR关系）
-                j_condition = (current_j <= self.j_threshold or 
+                j_condition = (current_j <= self.j_threshold and 
                               j_quantile <= self.j_q_threshold)
                 
                 bbi_condition = bbi_quantile <= self.bbi_q_threshold
@@ -139,7 +139,7 @@ class BBIShortLongSelector(Selector):
                  n_short: int = 3,
                  n_long: int = 21,
                  m: int = 3,
-                 bbi_min_window: int = 2,
+                 bbi_min_window: int = 24,  # 改为24，确保BBI计算准确
                  max_window: int = 60,
                  bbi_q_threshold: float = 0.2):
         
@@ -166,7 +166,7 @@ class BBIShortLongSelector(Selector):
         return bbi
     
     def select(self, trade_date: pd.Timestamp, data: Dict[str, pd.DataFrame]) -> List[str]:
-        """补票战法选股逻辑"""
+        """补票战法选股逻辑 - 修正版"""
         picks = []
         
         for code, df in data.items():
@@ -195,6 +195,7 @@ class BBIShortLongSelector(Selector):
                 current_bbi = bbi.iloc[-1]
                 current_ma_short = ma_short.iloc[-1]
                 current_ma_long = ma_long.iloc[-1]
+                current_price = recent_df['close'].iloc[-1]
                 
                 if pd.isna(current_bbi) or pd.isna(current_ma_short) or pd.isna(current_ma_long):
                     continue
@@ -206,20 +207,40 @@ class BBIShortLongSelector(Selector):
                 
                 bbi_quantile = (current_bbi <= bbi_valid).mean()
                 
-                # 选股条件
+                # 补票战法逻辑修正：
+                # 1. 短期均线上穿长期均线（确认上涨趋势）
                 ma_condition = current_ma_short > current_ma_long
-                bbi_condition = bbi_quantile <= self.bbi_q_threshold
                 
-                if ma_condition and bbi_condition:
+                # 2. BBI已经脱离底部但还未过高（补票时机）
+                # 从低分位数(20%)上升到中等分位数(20%-60%)之间
+                bbi_breaking_condition = (bbi_quantile > self.bbi_q_threshold and 
+                                        bbi_quantile <= 0.6)
+                
+                # 3. 价格有上涨动能（近期上涨确认）
+                if len(recent_df) >= 5:
+                    price_momentum = current_price > recent_df['close'].iloc[-5]  # 5日内上涨
+                else:
+                    price_momentum = True
+                
+                # 4. 均线距离适中（不是暴涨状态，还有补票机会）
+                ma_distance = abs(current_ma_short - current_ma_long) / current_ma_long
+                ma_distance_reasonable = ma_distance <= 0.05  # 均线距离不超过5%
+                
+                # 综合判断：确认上涨趋势 + BBI脱离底部 + 有上涨动能 + 均线距离合理
+                if ma_condition and bbi_breaking_condition and price_momentum and ma_distance_reasonable:
                     picks.append(code)
-                    logger.debug("%s 选中: MA短期%.2f > MA长期%.2f, BBI分位%.2f%%",
-                               code, current_ma_short, current_ma_long, bbi_quantile*100)
-                
+                    logger.debug("%s 选中[补票]: MA短期%.2f > MA长期%.2f, BBI分位%.2f%% (脱离底部), 均线距离%.2f%%",
+                               code, current_ma_short, current_ma_long, bbi_quantile*100, ma_distance*100)
+                else:
+                    logger.debug("%s 未选中: MA条件:%s, BBI脱离条件:%s(%.2f%%), 动能:%s, 距离:%s(%.2f%%)",
+                               code, ma_condition, bbi_breaking_condition, bbi_quantile*100, 
+                               price_momentum, ma_distance_reasonable, ma_distance*100)
+            
             except Exception as e:
                 logger.warning("处理股票 %s 时出错: %s", code, e)
                 continue
-        
-        logger.info("BBIShortLongSelector 共选出 %d 只股票", len(picks))
+    
+        logger.info("BBIShortLongSelector(补票战法) 共选出 %d 只股票", len(picks))
         return sorted(picks)
 
 
@@ -300,7 +321,7 @@ class BreakoutVolumeKDJSelector(Selector):
                 j_quantile = (current_j <= j_valid).mean()
                 
                 # 选股条件
-                j_condition = (current_j <= self.j_threshold or j_quantile <= self.j_q_threshold)
+                j_condition = (current_j <= self.j_threshold and j_quantile <= self.j_q_threshold)
                 breakout_condition = price_change_pct >= self.up_threshold
                 volume_condition = volume_ratio >= self.volume_threshold
                 
@@ -396,7 +417,7 @@ class PeakKDJSelector(Selector):
                 j_quantile = (current_j <= j_valid).mean()
                 
                 # 选股条件
-                j_condition = (current_j <= self.j_threshold or j_quantile <= self.j_q_threshold)
+                j_condition = (current_j <= self.j_threshold and j_quantile <= self.j_q_threshold)
                 pullback_condition = pullback_pct >= self.gap_threshold
                 volatility_condition = volatility <= self.fluc_threshold
                 

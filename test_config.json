@@ -1,0 +1,12 @@
+{
+  "selectors": [{
+    "class": "BBIKDJSelector",
+    "alias": "少妇战法测试",
+    "activate": true,
+    "params": {
+      "j_threshold": 1,
+      "bbi_q_threshold": 0.1,
+      "j_q_threshold": 0.1
+    }
+  }]
+}
